@@ -7,17 +7,28 @@ from pymavlink import mavutil
 from pymavlink.dialects.v20.common \
     import MAVLink_gps_input_message, MAVLink_attitude_message, MAVLink_global_position_int_message, MAVLink_gps_raw_int_message
 
-latitude=37.902067
-longitude=-121.498691
+latitude=0
+longitude=0
+
+latitude1=37.902067
+longitude1=-121.498691
 altitude=1
 yaw_deg=30
 
-latitude2 =37.902067
-longitude2 =-121.498691
+latitude2 =37.90345
+longitude2 =-121.498763
 altitude2 =1
 yaw_deg2=30
 
-# dist_time
+dist_time=20 #Seconds to move from position 1 to position 2 or back
+send_delay=.2 #seconds between sent mavlink messages
+
+loop=0
+loops = int(dist_time/send_delay)
+rise = True
+
+latitude = latitude1
+longitude = longitude1
 
 def create_mavlink_gps_input_msg(): #232
     return MAVLink_gps_input_message(
@@ -90,15 +101,31 @@ if __name__=="__main__":
         autoreconnect=True,
         input=False)
 
+    loop = 0
+    diffLat = latitude2 - latitude1
+    diffLon = longitude2 - longitude1
 
 
     while True:
+        if loop == loops:
+            rise = False
+        if loop == 0:
+            rise = True
+
 
         connection.mav.heartbeat_send(mavutil.mavlink.MAV_TYPE_GENERIC, mavutil.mavlink.MAV_AUTOPILOT_INVALID, 0, 0, 0)
 
-        #Loop through all the beacon positions
-        # for x in
+        if abs(diffLat) > .00001 or abs(diffLon) > .00001:
 
+            latitude = (loop * diffLat/loops) + latitude1
+            longitude = (loop * diffLon/loops) + longitude1
+            print(latitude)
+            print(longitude)
+        # else:
+            # latitude = latitude1
+            # longitude = longitude1
+
+        #Publish the mavlink messages
         gps_input_mav_msg = create_mavlink_gps_input_msg()
         attitude_mav_msg = create_mavlink_attitude()
         global_position_int_msg = create_mavlink_global_position_int_message()
@@ -108,5 +135,10 @@ if __name__=="__main__":
         connection.mav.send(global_position_int_msg)
         connection.mav.send(gps_raw_int_msg)
 
-        time.sleep(0.2)
+        if rise:
+            loop += 1
+        else:
+            loop -= 1
+
+        time.sleep(send_delay)
 
