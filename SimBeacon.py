@@ -2,6 +2,7 @@
 
 import time
 import math
+import argparse
 
 from pymavlink import mavutil
 from pymavlink.dialects.v20.common \
@@ -95,15 +96,34 @@ def create_mavlink_gps_raw_int_message(): #24
 
 
 if __name__=="__main__":
+
+    parser = argparse.ArgumentParser(description='This is a very light weight beacon simulator. It connects to mavlink router over TCP port:5760. Publishes location at 5Hz. Specify coordinates and motion through arguments. NOTE: The beacon will not publish faster if the simulation is accelerated')
+    parser.add_argument('-lat1', type=float, default=37.902067, help='Starting beacon latitude (default 37.902067)')
+    parser.add_argument('-lat2', type=float, help='Ending beacon latitude')
+    parser.add_argument('-lon1', type=float, default=-121.498691, help='Starting beacon longitude (default -121.498691)')
+    parser.add_argument('-lon2', type=float, help='Ending beacon longitude')
+    parser.add_argument('-dis_time', type=float, default=360, help='Time to move between 2 locations (default 360)')
+    parser.add_argument('-beacon_id', type=int, default=10, help='beacon ID of simulated beacon')
+
+    args = parser.parse_args()
+
+
     connection = mavutil.mavlink_connection(
         'tcp:localhost:5760',
-        source_system=10,
+        source_system=args.beacon_id,
         autoreconnect=True,
         input=False)
 
     loop = 0
-    diffLat = latitude2 - latitude1
-    diffLon = longitude2 - longitude1
+
+
+    if args.lat2==None:
+        latitude2 = args.lat1
+    if args.lon2==None:
+        longitude2 = args.lon1
+
+    diffLat = latitude2 - args.lat1
+    diffLon = longitude2 - args.lon1
 
 
     while True:
@@ -119,11 +139,9 @@ if __name__=="__main__":
 
             latitude = (loop * diffLat/loops) + latitude1
             longitude = (loop * diffLon/loops) + longitude1
-            print(latitude)
-            print(longitude)
-        # else:
-            # latitude = latitude1
-            # longitude = longitude1
+        else:
+            latitude = latitude1
+            longitude = longitude1
 
         #Publish the mavlink messages
         gps_input_mav_msg = create_mavlink_gps_input_msg()
