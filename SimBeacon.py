@@ -24,8 +24,6 @@ yaw_deg2=30
 dist_time=20 #Seconds to move from position 1 to position 2 or back
 send_delay=.2 #seconds between sent mavlink messages
 
-loop=0
-loops = int(dist_time/send_delay)
 rise = True
 
 latitude = latitude1
@@ -102,7 +100,7 @@ if __name__=="__main__":
     parser.add_argument('-lat2', type=float, help='Ending beacon latitude')
     parser.add_argument('-lon1', type=float, default=-121.498691, help='Starting beacon longitude (default -121.498691)')
     parser.add_argument('-lon2', type=float, help='Ending beacon longitude')
-    parser.add_argument('-dis_time', type=float, default=360, help='Time to move between 2 locations (default 360)')
+    parser.add_argument('-dist_time', type=float, default=360, help='Time to move between 2 locations (default 360)')
     parser.add_argument('-beacon_id', type=int, default=10, help='beacon ID of simulated beacon')
 
     args = parser.parse_args()
@@ -115,7 +113,7 @@ if __name__=="__main__":
         input=False)
 
     loop = 0
-
+    loops = int(args.dist_time/send_delay)
 
     if args.lat2==None:
         latitude2 = args.lat1
